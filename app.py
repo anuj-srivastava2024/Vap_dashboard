@@ -54,18 +54,6 @@ h3 {
     margin: 6px 0 3px 0;
 }
 
-.js-plotly-plot .plotly .bars path {
-    filter: drop-shadow(0 0 4px rgba(56,189,248,0.5));
-}
-
-.js-plotly-plot .plotly .bars path[fill="#22c55e"] {
-    filter: drop-shadow(0 0 4px rgba(34,197,94,0.8));
-}
-
-.js-plotly-plot .plotly .bars path[fill="#ef4444"] {
-    filter: drop-shadow(0 0 4px rgba(239,68,68,0.8));
-}
-
 ::-webkit-scrollbar {
     width: 4px;
 }
@@ -84,17 +72,9 @@ st.title("📊 Volume & Delta Dashboard")
 @st.cache_data
 def load_data():
     df = pd.read_csv("delta.csv")
-    df['date'] = pd.to_datetime(df['date'])
-
-    # --- FIX 1: extract product code from instrument ---
-    # e.g. "KWN26-U26" -> product = "KW", expiry = "N26-U26"
-    # adjust the split logic below if your naming convention differs
-    df['product_code'] = df['instrument'].str.extract(r'^([A-Za-z]+)')
-
-    # --- FIX 2: derive abs_delta and total_delta from delta column ---
+    df['date']       = pd.to_datetime(df['date'])
     df['total_delta'] = df['delta']
     df['abs_delta']   = df['delta'].abs()
-
     return df
 
 try:
