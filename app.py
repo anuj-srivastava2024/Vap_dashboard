@@ -11,30 +11,151 @@ st.set_page_config(layout="wide", page_title="VAP Terminal")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-.stApp {
-    background: #080c14 !important;
-    color: #c9d1d9;
-    font-family: 'Inter', sans-serif;
-}
+/* ── BASE ── */
+.stApp { background: #080c14 !important; color: #c9d1d9; }
 
+/* ── SIDEBAR ── */
 section[data-testid="stSidebar"] {
     background: #0a0f1a !important;
     border-right: 1px solid #1a2235 !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
 }
 
+section[data-testid="stSidebar"] > div {
+    padding: 0 !important;
+}
+
+/* sidebar logo */
+.sb-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: 3px;
+    padding: 16px 14px 10px;
+    border-bottom: 1px solid #1a2235;
+    margin-bottom: 10px;
+}
+
+/* section labels */
+.sb-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #1e2d3d;
+    padding: 10px 14px 5px;
+}
+
+/* search box */
+.sb-search {
+    margin: 4px 10px 8px;
+    background: #0d1525;
+    border: 1px solid #1a2235;
+    border-radius: 4px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #1e2d3d;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+}
+
+/* product rows */
+.sb-item {
+    padding: 7px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #2d4560;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+}
+
+.sb-item.active {
+    color: #38bdf8;
+    background: rgba(56,189,248,0.06);
+    border-left: 2px solid #38bdf8;
+}
+
+.sb-item i { font-size: 13px; }
+
+/* divider */
+.sb-divider {
+    height: 1px;
+    background: #1a2235;
+    margin: 10px 0;
+}
+
+/* display items */
+.sb-action {
+    padding: 7px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #2d4560;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.sb-action i { font-size: 13px; }
+
+/* hide native streamlit sidebar elements decoration */
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { margin: 0; }
+
+/* slider */
+section[data-testid="stSidebar"] [data-testid="stSlider"] {
+    padding: 0 14px;
+}
+
+section[data-testid="stSidebar"] [data-testid="stSlider"] label {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 9px !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
+    color: #1e2d3d !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stSlider"] p {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 9px !important;
+    color: #1e2d3d !important;
+}
+
+div[class*="stSlider"] > div > div > div[role="slider"] {
+    background: #38bdf8 !important;
+    border: none !important;
+    box-shadow: 0 0 6px rgba(56,189,248,0.5) !important;
+}
+
+div[class*="stSlider"] > div > div > div[data-testid="stThumbValue"] {
+    font-family: 'JetBrains Mono', monospace !important;
+    color: #38bdf8 !important;
+    font-size: 10px !important;
+}
+
+div[class*="stSlider"] [data-testid="stSliderTrackFill"] {
+    background: #38bdf8 !important;
+}
+
+/* multiselect hidden — we use custom HTML product list */
+section[data-testid="stSidebar"] [data-testid="stMultiSelect"] {
+    display: none !important;
+}
+
+/* ── MAIN ── */
 div[data-testid="stPlotlyChart"] {
     background: transparent !important;
     border: none !important;
-    box-shadow: none !important;
     padding: 0 !important;
     margin: 0 !important;
-}
-
-/* remove gap between header label and chart */
-div[data-testid="stVerticalBlock"] > div {
-    gap: 0 !important;
 }
 
 .term-header {
@@ -86,46 +207,6 @@ div[data-testid="stVerticalBlock"] > div {
     color: #4a6580;
 }
 
-.stat-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.stat-card {
-    background: #0d1525;
-    border: 1px solid #1a2235;
-    border-radius: 6px;
-    padding: 10px 14px;
-}
-
-.stat-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    color: #2d4560;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-}
-
-.stat-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 22px;
-    font-weight: 700;
-    color: #e2e8f0;
-}
-
-.stat-value.pos { color: #22c55e; }
-.stat-value.neg { color: #ef4444; }
-
-.stat-sub {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    color: #2d4560;
-    margin-top: 4px;
-}
-
 .section-header {
     display: flex;
     align-items: center;
@@ -161,7 +242,6 @@ div[data-testid="stVerticalBlock"] > div {
     margin-left: auto;
 }
 
-/* instrument card label — sits above chart */
 .inst-label {
     background: #0d1525;
     border: 1px solid #1a2235;
@@ -177,19 +257,12 @@ div[data-testid="stVerticalBlock"] > div {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     color: #38bdf8;
-    letter-spacing: 0.5px;
 }
 
-.inst-delta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-}
-
+.inst-delta { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; }
 .inst-delta.pos { color: #22c55e; }
 .inst-delta.neg { color: #ef4444; }
 
-/* instrument card footer — sits below chart */
 .inst-footer {
     background: #0d1525;
     border: 1px solid #1a2235;
@@ -201,12 +274,7 @@ div[data-testid="stVerticalBlock"] > div {
     margin-top: -6px;
 }
 
-.inst-stat {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 8px;
-    color: #1e2d3d;
-}
-
+.inst-stat { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #1e2d3d; }
 .inst-stat span { color: #3a5068; }
 
 .statusbar {
@@ -226,7 +294,7 @@ div[data-testid="stVerticalBlock"] > div {
 .statusbar span { color: #2d4560; }
 .statusbar b    { color: #38bdf8; font-weight: 500; }
 
-::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: #080c14; }
 ::-webkit-scrollbar-thumb { background: #1a2235; border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
@@ -252,32 +320,73 @@ def load_data():
 try:
     df = load_data()
 except FileNotFoundError:
-    st.error("❌ `delta.csv` not found. Commit it to your repo root.")
+    st.error("❌ `delta.csv` not found.")
     st.stop()
+
+all_products = sorted(df['product_code'].dropna().unique())
 
 # -------------------------------------------------
 # SIDEBAR
 # -------------------------------------------------
+
+# Logo
+st.sidebar.markdown('<div class="sb-logo">VAP</div>', unsafe_allow_html=True)
+
+# Products label + search decoration
+st.sidebar.markdown("""
+<div class="sb-label">Products</div>
+<div class="sb-search">
+    <i class="ti ti-search" style="font-size:12px;" aria-hidden="true"></i>
+    Filter...
+</div>
+""", unsafe_allow_html=True)
+
+# Native multiselect (hidden via CSS — drives actual filtering)
+selected_products = st.sidebar.multiselect(
+    "", options=all_products, default=all_products, label_visibility="collapsed"
+)
+
+# Styled product list (visual only — mirrors selection)
+product_html = ""
+for p in all_products:
+    active_cls = "active" if p in selected_products else ""
+    product_html += f"""
+    <div class="sb-item {active_cls}">
+        <i class="ti ti-chart-bar" aria-hidden="true"></i> {p}
+    </div>"""
+
+st.sidebar.markdown(product_html, unsafe_allow_html=True)
+
+# Divider + Period
+st.sidebar.markdown("""
+<div class="sb-divider"></div>
+<div class="sb-label">Period</div>
+""", unsafe_allow_html=True)
+
+days = st.sidebar.slider("DAYS", 5, 100, 20, label_visibility="collapsed")
+
+# Show days value
 st.sidebar.markdown(
-    '<div style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;'
-    'color:#38bdf8;letter-spacing:3px;padding:8px 0 16px;">VAP TERMINAL</div>',
+    f'<div style="font-family:JetBrains Mono,monospace;font-size:10px;'
+    f'color:#38bdf8;text-align:right;padding:2px 14px 8px;">{days}d</div>',
     unsafe_allow_html=True
 )
 
-products = sorted(df['product_code'].dropna().unique())
-
-selected_products = st.sidebar.multiselect(
-    "PRODUCTS", options=products, default=products
-)
-
-days = st.sidebar.slider("DAYS", 5, 100, 20)
+# Divider + Display
+st.sidebar.markdown("""
+<div class="sb-divider"></div>
+<div class="sb-label">Display</div>
+<div class="sb-action"><i class="ti ti-layout-grid" aria-hidden="true"></i> Grid view</div>
+<div class="sb-action"><i class="ti ti-table" aria-hidden="true"></i> Table view</div>
+<div class="sb-action"><i class="ti ti-download" aria-hidden="true"></i> Export CSV</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------
-# FILTER
+# FILTER DATA
 # -------------------------------------------------
-df_filtered = df[df['product_code'].isin(selected_products)].copy()
-cutoff      = df_filtered['date'].max() - pd.Timedelta(days=days)
-df_filtered = df_filtered[df_filtered['date'] >= cutoff]
+df_f    = df[df['product_code'].isin(selected_products)].copy()
+cutoff  = df_f['date'].max() - pd.Timedelta(days=days)
+df_f    = df_f[df_f['date'] >= cutoff]
 
 # -------------------------------------------------
 # HELPERS
@@ -289,41 +398,35 @@ def fmt(n):
     return f"{n:,}"
 
 def make_chart(dff):
-    colors_delta = []
-    for x in dff['total_delta']:
-        colors_delta.append('rgba(34,197,94,0.4)' if x >= 0 else 'rgba(239,68,68,0.4)')
-    # last bar full opacity
-    if colors_delta:
-        colors_delta[-1] = '#22c55e' if dff['total_delta'].iloc[-1] >= 0 else '#ef4444'
+    colors_d = [
+        'rgba(34,197,94,0.4)' if x >= 0 else 'rgba(239,68,68,0.4)'
+        for x in dff['total_delta']
+    ]
+    if colors_d:
+        colors_d[-1] = '#22c55e' if dff['total_delta'].iloc[-1] >= 0 else '#ef4444'
 
-    border_w = [0] * len(dff)
-    if border_w:
-        border_w[-1] = 1
+    bw = [0] * len(dff)
+    if bw: bw[-1] = 1
 
-    vol_colors = ['rgba(56,189,248,0.3)'] * len(dff)
-    if vol_colors:
-        vol_colors[-1] = '#38bdf8'
+    vc = ['rgba(56,189,248,0.3)'] * len(dff)
+    if vc: vc[-1] = '#38bdf8'
 
     fig = make_subplots(
-        rows=2, cols=1,
-        shared_xaxes=True,
-        vertical_spacing=0.02,
-        row_heights=[0.42, 0.58]
+        rows=2, cols=1, shared_xaxes=True,
+        vertical_spacing=0.02, row_heights=[0.42, 0.58]
     )
 
     fig.add_trace(go.Bar(
-        x=dff['x'],
-        y=dff['abs_delta'],
-        marker=dict(color=colors_delta, line=dict(color='#facc15', width=border_w)),
-        customdata=dff[['date_str', 'total_delta']].values,
+        x=dff['x'], y=dff['abs_delta'],
+        marker=dict(color=colors_d, line=dict(color='#facc15', width=bw)),
+        customdata=dff[['date_str','total_delta']].values,
         hovertemplate="<b>%{customdata[0]}</b><br>Δ %{customdata[1]:,}<extra></extra>"
     ), row=1, col=1)
 
     fig.add_trace(go.Bar(
-        x=dff['x'],
-        y=dff['total_volume'],
-        marker=dict(color=vol_colors, line=dict(color='#facc15', width=border_w)),
-        customdata=dff[['date_str', 'total_volume']].values,
+        x=dff['x'], y=dff['total_volume'],
+        marker=dict(color=vc, line=dict(color='#facc15', width=bw)),
+        customdata=dff[['date_str','total_volume']].values,
         hovertemplate="<b>%{customdata[0]}</b><br>Vol %{customdata[1]:,}<extra></extra>"
     ), row=2, col=1)
 
@@ -334,22 +437,18 @@ def make_chart(dff):
         plot_bgcolor="#0d1525",
         paper_bgcolor="#0d1525",
         font=dict(color="#38bdf8", size=8, family="JetBrains Mono"),
-        hovermode="x unified",
-        bargap=0.15,
+        hovermode="x unified", bargap=0.15,
         hoverlabel=dict(
-            bgcolor="#0d1525",
-            bordercolor="#1a2235",
+            bgcolor="#0d1525", bordercolor="#1a2235",
             font=dict(color="#e2e8f0", size=10, family="JetBrains Mono")
         )
     )
-
     fig.update_xaxes(showticklabels=False, showgrid=False, zeroline=False, showline=False)
     fig.update_yaxes(showgrid=False, zeroline=False, showline=False, showticklabels=False)
-
     return fig
 
 # -------------------------------------------------
-# HEADER BAR
+# HEADER
 # -------------------------------------------------
 st.markdown(f"""
 <div class="term-header">
@@ -366,52 +465,13 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------
-# STAT STRIP
-# -------------------------------------------------
-total_vol  = df_filtered['total_volume'].sum()
-net_delta  = df_filtered['total_delta'].sum()
-buy_vol    = df_filtered['buying_volume'].sum()
-sell_vol   = df_filtered['selling_volume'].sum()
-buy_pct    = buy_vol / total_vol * 100 if total_vol else 0
-
-dc  = "pos" if net_delta >= 0 else "neg"
-ds  = "+" if net_delta >= 0 else ""
-dpr = "Buy pressure" if net_delta >= 0 else "Sell pressure"
-
-st.markdown(f"""
-<div class="stat-grid">
-    <div class="stat-card">
-        <div class="stat-label">Total Volume</div>
-        <div class="stat-value">{fmt(total_vol)}</div>
-        <div class="stat-sub">{days}d window</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Net Delta</div>
-        <div class="stat-value {dc}">{ds}{fmt(net_delta)}</div>
-        <div class="stat-sub">{dpr}</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Buy Vol</div>
-        <div class="stat-value pos">{fmt(buy_vol)}</div>
-        <div class="stat-sub">{buy_pct:.1f}% of total</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Sell Vol</div>
-        <div class="stat-value neg">{fmt(sell_vol)}</div>
-        <div class="stat-sub">{100-buy_pct:.1f}% of total</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# -------------------------------------------------
-# DASHBOARD — cards built purely in Streamlit columns
-# no HTML wrappers around st.plotly_chart
+# DASHBOARD
 # -------------------------------------------------
 COLS = 5
 
 for product in selected_products:
 
-    product_df = df_filtered[df_filtered['product_code'] == product]
+    product_df = df_f[df_f['product_code'] == product]
     if product_df.empty:
         continue
 
@@ -453,7 +513,6 @@ for product in selected_products:
                 dcls       = "pos" if last_delta >= 0 else "neg"
                 total_v    = int(dff['total_volume'].sum())
 
-                # ── header label ──
                 st.markdown(f"""
                 <div class="inst-label">
                     <div class="inst-name">{inst}</div>
@@ -461,19 +520,15 @@ for product in selected_products:
                 </div>
                 """, unsafe_allow_html=True)
 
-                # ── chart (native Streamlit — not inside HTML) ──
                 fig = make_chart(dff)
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True,
-                    config={'displayModeBar': False}
-                )
+                st.plotly_chart(fig, use_container_width=True,
+                                config={'displayModeBar': False})
 
-                # ── footer ──
                 st.markdown(f"""
                 <div class="inst-footer">
                     <div class="inst-stat">VOL <span>{fmt(total_v)}</span></div>
-                    <div class="inst-stat">Δ <span style="color:{'#22c55e' if last_delta>=0 else '#ef4444'};">{sign}{fmt(last_delta)}</span></div>
+                    <div class="inst-stat">Δ <span style="color:{'#22c55e' if last_delta>=0 else '#ef4444'};">
+                        {sign}{fmt(last_delta)}</span></div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -485,7 +540,7 @@ st.markdown(f"""
     <div>VAP DASHBOARD — VOLUME &amp; DELTA ANALYTICS</div>
     <div style="display:flex;gap:20px;">
         <div><span>DATA</span> <b>delta.csv</b></div>
-        <div><span>ROWS</span> <b>{len(df_filtered):,}</b></div>
+        <div><span>ROWS</span> <b>{len(df_f):,}</b></div>
         <div><span>WINDOW</span> <b>{days}d</b></div>
         <div><span>UPDATED</span> <b>{datetime.utcnow().strftime('%H:%M:%S')}</b></div>
     </div>
