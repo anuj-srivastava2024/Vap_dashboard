@@ -95,7 +95,7 @@ st.title("📊 Volume & Delta Dashboard")
 # -------------------------------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("vap_dashboard_main.csv")
+    df = pd.read_csv("delta.csv")
     df['date'] = pd.to_datetime(df['date'])
     return df
 
@@ -103,7 +103,7 @@ try:
     df = load_data()
 except FileNotFoundError:
     st.error(
-        "❌ `vap_dashboard_main.csv` not found.  \n"
+        "❌ `delta.csv` not found.  \n"
         "Make sure the file is committed to the **root** of your GitHub repo."
     )
     st.stop()
