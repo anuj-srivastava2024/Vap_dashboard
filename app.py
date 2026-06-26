@@ -8,24 +8,18 @@ from plotly.subplots import make_subplots
 # -------------------------------------------------
 st.set_page_config(layout="wide", page_title="Volume & Delta Dashboard")
 
-# -------------------------------------------------
-# 🔥 ULTRA COMPACT + GLOW UI
-# -------------------------------------------------
 st.markdown("""
 <style>
 
-/* BACKGROUND */
 .stApp {
     background: radial-gradient(circle at top, #020617, #000814);
     color: #e2e8f0;
 }
 
-/* SIDEBAR */
 section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #000814, #020617);
 }
 
-/* REMOVE CHART BOX */
 div[data-testid="stPlotlyChart"] {
     background: transparent !important;
     border: none !important;
@@ -33,7 +27,6 @@ div[data-testid="stPlotlyChart"] {
     padding: 0 !important;
 }
 
-/* CARD */
 .card {
     background: linear-gradient(145deg, rgba(15,23,42,0.9), rgba(2,6,23,0.95));
     border-radius: 10px;
@@ -50,20 +43,17 @@ div[data-testid="stPlotlyChart"] {
     transform: translateY(-2px);
 }
 
-/* TITLE */
 .card-title {
     font-size: 10px;
     margin-bottom: 2px;
     color: #38bdf8;
 }
 
-/* HEADER */
 h3 {
     font-size: 14px;
     margin: 6px 0 3px 0;
 }
 
-/* BAR GLOW */
 .js-plotly-plot .plotly .bars path {
     filter: drop-shadow(0 0 4px rgba(56,189,248,0.5));
 }
@@ -76,7 +66,6 @@ h3 {
     filter: drop-shadow(0 0 4px rgba(239,68,68,0.8));
 }
 
-/* SCROLLBAR */
 ::-webkit-scrollbar {
     width: 4px;
 }
@@ -90,13 +79,22 @@ h3 {
 st.title("📊 Volume & Delta Dashboard")
 
 # -------------------------------------------------
-# LOAD DATA  (paths work both locally and on Streamlit Cloud
-#             as long as CSVs are committed to repo root)
+# LOAD DATA
 # -------------------------------------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("delta.csv")
     df['date'] = pd.to_datetime(df['date'])
+
+    # --- FIX 1: extract product code from instrument ---
+    # e.g. "KWN26-U26" -> product = "KW", expiry = "N26-U26"
+    # adjust the split logic below if your naming convention differs
+    df['product_code'] = df['instrument'].str.extract(r'^([A-Za-z]+)')
+
+    # --- FIX 2: derive abs_delta and total_delta from delta column ---
+    df['total_delta'] = df['delta']
+    df['abs_delta']   = df['delta'].abs()
+
     return df
 
 try:
@@ -158,9 +156,6 @@ for product in selected_products:
 
                 inst = row_instruments[j]
 
-                # -----------------------------------------------
-                # 🔥 REMOVE WEEKEND GAPS — use continuous index
-                # -----------------------------------------------
                 dff = (
                     product_df[product_df['instrument'] == inst]
                     .sort_values('date')
@@ -179,9 +174,6 @@ for product in selected_products:
                 if border_width:
                     border_width[-1] = 1
 
-                # -----------------------------------------------
-                # CHART
-                # -----------------------------------------------
                 fig = make_subplots(
                     rows=2, cols=1,
                     shared_xaxes=True,
@@ -224,9 +216,6 @@ for product in selected_products:
                 fig.update_xaxes(showticklabels=False)
                 fig.update_yaxes(showgrid=False)
 
-                # -----------------------------------------------
-                # CARD
-                # -----------------------------------------------
                 st.markdown('<div class="card">', unsafe_allow_html=True)
                 st.markdown(
                     f'<div class="card-title">{inst}</div>',
