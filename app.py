@@ -4,19 +4,14 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime
 
-# -------------------------------------------------
-# CONFIG
-# -------------------------------------------------
 st.set_page_config(layout="wide", page_title="VAP Terminal")
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-/* ── BASE ── */
 .stApp { background: #080c14 !important; color: #c9d1d9; }
 
-/* ── SIDEBAR ── */
 section[data-testid="stSidebar"] {
     background: #0a0f1a !important;
     border-right: 1px solid #1a2235 !important;
@@ -24,11 +19,24 @@ section[data-testid="stSidebar"] {
     max-width: 200px !important;
 }
 
-section[data-testid="stSidebar"] > div {
-    padding: 0 !important;
+section[data-testid="stSidebar"] > div { padding: 0 !important; }
+
+section[data-testid="stSidebar"] .sb-logo,
+section[data-testid="stSidebar"] .sb-label,
+section[data-testid="stSidebar"] .sb-search,
+section[data-testid="stSidebar"] .sb-divider {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
-/* sidebar logo */
+section[data-testid="stSidebar"] .sb-item,
+section[data-testid="stSidebar"] .sb-action {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 .sb-logo {
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
@@ -40,41 +48,33 @@ section[data-testid="stSidebar"] > div {
     margin-bottom: 10px;
 }
 
-/* section labels */
 .sb-label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     letter-spacing: 1.8px;
     text-transform: uppercase;
-    color: #1e2d3d;
+    color: #2d4560;
     padding: 10px 14px 5px;
 }
 
-/* search box */
 .sb-search {
     margin: 4px 10px 8px;
     background: #0d1525;
     border: 1px solid #1a2235;
     border-radius: 4px;
     padding: 6px 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #1e2d3d;
+    color: #2d4560;
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
 }
 
-/* product rows */
 .sb-item {
     padding: 7px 14px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     color: #2d4560;
-    display: flex;
     align-items: center;
     gap: 8px;
-    cursor: pointer;
     border-left: 2px solid transparent;
 }
 
@@ -84,49 +84,27 @@ section[data-testid="stSidebar"] > div {
     border-left: 2px solid #38bdf8;
 }
 
-.sb-item i { font-size: 13px; }
-
-/* divider */
 .sb-divider {
     height: 1px;
     background: #1a2235;
     margin: 10px 0;
 }
 
-/* display items */
 .sb-action {
     padding: 7px 14px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: #2d4560;
-    display: flex;
     align-items: center;
     gap: 8px;
-    cursor: pointer;
 }
 
-.sb-action i { font-size: 13px; }
+section[data-testid="stSidebar"] [data-testid="stMultiSelect"] {
+    display: none !important;
+}
 
-/* hide native streamlit sidebar elements decoration */
-section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { margin: 0; }
-
-/* slider */
 section[data-testid="stSidebar"] [data-testid="stSlider"] {
     padding: 0 14px;
-}
-
-section[data-testid="stSidebar"] [data-testid="stSlider"] label {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 9px !important;
-    letter-spacing: 1.5px !important;
-    text-transform: uppercase !important;
-    color: #1e2d3d !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stSlider"] p {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 9px !important;
-    color: #1e2d3d !important;
 }
 
 div[class*="stSlider"] > div > div > div[role="slider"] {
@@ -135,22 +113,10 @@ div[class*="stSlider"] > div > div > div[role="slider"] {
     box-shadow: 0 0 6px rgba(56,189,248,0.5) !important;
 }
 
-div[class*="stSlider"] > div > div > div[data-testid="stThumbValue"] {
-    font-family: 'JetBrains Mono', monospace !important;
-    color: #38bdf8 !important;
-    font-size: 10px !important;
-}
-
 div[class*="stSlider"] [data-testid="stSliderTrackFill"] {
     background: #38bdf8 !important;
 }
 
-/* multiselect hidden — we use custom HTML product list */
-section[data-testid="stSidebar"] [data-testid="stMultiSelect"] {
-    display: none !important;
-}
-
-/* ── MAIN ── */
 div[data-testid="stPlotlyChart"] {
     background: transparent !important;
     border: none !important;
@@ -320,7 +286,7 @@ def load_data():
 try:
     df = load_data()
 except FileNotFoundError:
-    st.error("❌ `delta.csv` not found.")
+    st.error("❌ delta.csv not found. Commit it to your repo root.")
     st.stop()
 
 all_products = sorted(df['product_code'].dropna().unique())
@@ -328,36 +294,25 @@ all_products = sorted(df['product_code'].dropna().unique())
 # -------------------------------------------------
 # SIDEBAR
 # -------------------------------------------------
-
-# Logo
 st.sidebar.markdown('<div class="sb-logo">VAP</div>', unsafe_allow_html=True)
 
-# Products label + search decoration
 st.sidebar.markdown("""
 <div class="sb-label">Products</div>
-<div class="sb-search">
-    <i class="ti ti-search" style="font-size:12px;" aria-hidden="true"></i>
-    Filter...
-</div>
+<div class="sb-search">⌕ Filter...</div>
 """, unsafe_allow_html=True)
 
-# Native multiselect (hidden via CSS — drives actual filtering)
 selected_products = st.sidebar.multiselect(
-    "", options=all_products, default=all_products, label_visibility="collapsed"
+    "", options=all_products, default=all_products,
+    label_visibility="collapsed"
 )
 
-# Styled product list (visual only — mirrors selection)
 product_html = ""
 for p in all_products:
     active_cls = "active" if p in selected_products else ""
-    product_html += f"""
-    <div class="sb-item {active_cls}">
-        <i class="ti ti-chart-bar" aria-hidden="true"></i> {p}
-    </div>"""
+    product_html += f'<div class="sb-item {active_cls}">▣ {p}</div>'
 
 st.sidebar.markdown(product_html, unsafe_allow_html=True)
 
-# Divider + Period
 st.sidebar.markdown("""
 <div class="sb-divider"></div>
 <div class="sb-label">Period</div>
@@ -365,28 +320,26 @@ st.sidebar.markdown("""
 
 days = st.sidebar.slider("DAYS", 5, 100, 20, label_visibility="collapsed")
 
-# Show days value
 st.sidebar.markdown(
     f'<div style="font-family:JetBrains Mono,monospace;font-size:10px;'
     f'color:#38bdf8;text-align:right;padding:2px 14px 8px;">{days}d</div>',
     unsafe_allow_html=True
 )
 
-# Divider + Display
 st.sidebar.markdown("""
 <div class="sb-divider"></div>
 <div class="sb-label">Display</div>
-<div class="sb-action"><i class="ti ti-layout-grid" aria-hidden="true"></i> Grid view</div>
-<div class="sb-action"><i class="ti ti-table" aria-hidden="true"></i> Table view</div>
-<div class="sb-action"><i class="ti ti-download" aria-hidden="true"></i> Export CSV</div>
+<div class="sb-action">⊞ Grid view</div>
+<div class="sb-action">⊟ Table view</div>
+<div class="sb-action">↓ Export CSV</div>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------
-# FILTER DATA
+# FILTER
 # -------------------------------------------------
-df_f    = df[df['product_code'].isin(selected_products)].copy()
-cutoff  = df_f['date'].max() - pd.Timedelta(days=days)
-df_f    = df_f[df_f['date'] >= cutoff]
+df_f   = df[df['product_code'].isin(selected_products)].copy()
+cutoff = df_f['date'].max() - pd.Timedelta(days=days)
+df_f   = df_f[df_f['date'] >= cutoff]
 
 # -------------------------------------------------
 # HELPERS
@@ -419,14 +372,14 @@ def make_chart(dff):
     fig.add_trace(go.Bar(
         x=dff['x'], y=dff['abs_delta'],
         marker=dict(color=colors_d, line=dict(color='#facc15', width=bw)),
-        customdata=dff[['date_str','total_delta']].values,
+        customdata=dff[['date_str', 'total_delta']].values,
         hovertemplate="<b>%{customdata[0]}</b><br>Δ %{customdata[1]:,}<extra></extra>"
     ), row=1, col=1)
 
     fig.add_trace(go.Bar(
         x=dff['x'], y=dff['total_volume'],
         marker=dict(color=vc, line=dict(color='#facc15', width=bw)),
-        customdata=dff[['date_str','total_volume']].values,
+        customdata=dff[['date_str', 'total_volume']].values,
         hovertemplate="<b>%{customdata[0]}</b><br>Vol %{customdata[1]:,}<extra></extra>"
     ), row=2, col=1)
 
