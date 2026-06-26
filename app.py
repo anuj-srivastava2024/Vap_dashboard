@@ -12,111 +12,86 @@ st.markdown("""
 
 .stApp { background: #080c14 !important; color: #c9d1d9; }
 
+/* SIDEBAR */
 section[data-testid="stSidebar"] {
     background: #0a0f1a !important;
     border-right: 1px solid #1a2235 !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
 }
 
-section[data-testid="stSidebar"] > div { padding: 0 !important; }
-
-section[data-testid="stSidebar"] .sb-logo,
-section[data-testid="stSidebar"] .sb-label,
-section[data-testid="stSidebar"] .sb-search,
-section[data-testid="stSidebar"] .sb-divider {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+/* sidebar all text */
+section[data-testid="stSidebar"] * {
+    font-family: 'JetBrains Mono', monospace !important;
+    color: #4a6580 !important;
 }
 
-section[data-testid="stSidebar"] .sb-item,
-section[data-testid="stSidebar"] .sb-action {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+/* sidebar labels */
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] .stMarkdown p {
+    font-size: 11px !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
+    color: #2d4560 !important;
 }
 
-.sb-logo {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    font-weight: 700;
-    color: #38bdf8;
-    letter-spacing: 3px;
-    padding: 16px 14px 10px;
-    border-bottom: 1px solid #1a2235;
-    margin-bottom: 10px;
+/* multiselect box */
+section[data-testid="stSidebar"] [data-testid="stMultiSelect"] > div > div {
+    background: #0d1525 !important;
+    border: 1px solid #1a2235 !important;
+    border-radius: 4px !important;
 }
 
-.sb-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 1.8px;
-    text-transform: uppercase;
-    color: #2d4560;
-    padding: 10px 14px 5px;
+/* multiselect tags */
+section[data-testid="stSidebar"] [data-testid="stMultiSelect"] span[data-baseweb="tag"] {
+    background: rgba(56,189,248,0.12) !important;
+    border: 1px solid rgba(56,189,248,0.25) !important;
+    border-radius: 3px !important;
 }
 
-.sb-search {
-    margin: 4px 10px 8px;
-    background: #0d1525;
-    border: 1px solid #1a2235;
-    border-radius: 4px;
-    padding: 6px 10px;
-    color: #2d4560;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
+section[data-testid="stSidebar"] [data-testid="stMultiSelect"] span[data-baseweb="tag"] span {
+    color: #38bdf8 !important;
+    font-size: 10px !important;
 }
 
-.sb-item {
-    padding: 7px 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #2d4560;
-    align-items: center;
-    gap: 8px;
-    border-left: 2px solid transparent;
+/* multiselect input text */
+section[data-testid="stSidebar"] [data-testid="stMultiSelect"] input {
+    color: #38bdf8 !important;
+    font-size: 11px !important;
 }
 
-.sb-item.active {
-    color: #38bdf8;
-    background: rgba(56,189,248,0.06);
-    border-left: 2px solid #38bdf8;
+/* multiselect dropdown options */
+section[data-testid="stSidebar"] [data-testid="stMultiSelect"] li {
+    background: #0d1525 !important;
+    color: #4a6580 !important;
+    font-size: 11px !important;
 }
 
-.sb-divider {
-    height: 1px;
-    background: #1a2235;
-    margin: 10px 0;
+section[data-testid="stSidebar"] [data-testid="stMultiSelect"] li:hover {
+    background: rgba(56,189,248,0.08) !important;
+    color: #38bdf8 !important;
 }
 
-.sb-action {
-    padding: 7px 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    color: #2d4560;
-    align-items: center;
-    gap: 8px;
-}
-
-section[data-testid="stSidebar"] [data-testid="stMultiSelect"] {
-    display: none !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stSlider"] {
-    padding: 0 14px;
-}
-
-div[class*="stSlider"] > div > div > div[role="slider"] {
-    background: #38bdf8 !important;
-    border: none !important;
-    box-shadow: 0 0 6px rgba(56,189,248,0.5) !important;
-}
-
+/* slider track */
 div[class*="stSlider"] [data-testid="stSliderTrackFill"] {
     background: #38bdf8 !important;
 }
 
+/* slider thumb */
+div[class*="stSlider"] > div > div > div[role="slider"] {
+    background: #38bdf8 !important;
+    border: none !important;
+    box-shadow: 0 0 8px rgba(56,189,248,0.6) !important;
+}
+
+/* slider value label */
+div[class*="stSlider"] [data-testid="stThumbValue"],
+div[class*="stSlider"] [data-testid="stTickBarMin"],
+div[class*="stSlider"] [data-testid="stTickBarMax"] {
+    color: #38bdf8 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 10px !important;
+}
+
+/* MAIN */
 div[data-testid="stPlotlyChart"] {
     background: transparent !important;
     border: none !important;
@@ -286,53 +261,32 @@ def load_data():
 try:
     df = load_data()
 except FileNotFoundError:
-    st.error("❌ delta.csv not found. Commit it to your repo root.")
+    st.error("❌ delta.csv not found.")
     st.stop()
 
 all_products = sorted(df['product_code'].dropna().unique())
 
 # -------------------------------------------------
-# SIDEBAR
+# SIDEBAR — native widgets only, no custom HTML
 # -------------------------------------------------
-st.sidebar.markdown('<div class="sb-logo">VAP</div>', unsafe_allow_html=True)
-
-st.sidebar.markdown("""
-<div class="sb-label">Products</div>
-<div class="sb-search">⌕ Filter...</div>
-""", unsafe_allow_html=True)
-
+st.sidebar.markdown("---")
+st.sidebar.markdown("PRODUCTS")
 selected_products = st.sidebar.multiselect(
-    "", options=all_products, default=all_products,
+    "Select products",
+    options=all_products,
+    default=all_products,
     label_visibility="collapsed"
 )
 
-product_html = ""
-for p in all_products:
-    active_cls = "active" if p in selected_products else ""
-    product_html += f'<div class="sb-item {active_cls}">▣ {p}</div>'
-
-st.sidebar.markdown(product_html, unsafe_allow_html=True)
-
-st.sidebar.markdown("""
-<div class="sb-divider"></div>
-<div class="sb-label">Period</div>
-""", unsafe_allow_html=True)
-
-days = st.sidebar.slider("DAYS", 5, 100, 20, label_visibility="collapsed")
-
-st.sidebar.markdown(
-    f'<div style="font-family:JetBrains Mono,monospace;font-size:10px;'
-    f'color:#38bdf8;text-align:right;padding:2px 14px 8px;">{days}d</div>',
-    unsafe_allow_html=True
+st.sidebar.markdown("---")
+st.sidebar.markdown("DAYS")
+days = st.sidebar.slider(
+    "Days",
+    min_value=5,
+    max_value=100,
+    value=20,
+    label_visibility="collapsed"
 )
-
-st.sidebar.markdown("""
-<div class="sb-divider"></div>
-<div class="sb-label">Display</div>
-<div class="sb-action">⊞ Grid view</div>
-<div class="sb-action">⊟ Table view</div>
-<div class="sb-action">↓ Export CSV</div>
-""", unsafe_allow_html=True)
 
 # -------------------------------------------------
 # FILTER
