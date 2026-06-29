@@ -3,76 +3,50 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# -------------------------------------------------
-# CONFIG
-# -------------------------------------------------
 st.set_page_config(layout="wide", page_title="Volume & Delta Dashboard")
 
 st.markdown("""
 <style>
-
 .stApp {
     background: radial-gradient(circle at top, #020617, #000814);
     color: #e2e8f0;
 }
-
 section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #000814, #020617);
 }
-
 div[data-testid="stPlotlyChart"] {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
 }
-
 .card {
     background: linear-gradient(145deg, rgba(15,23,42,0.9), rgba(2,6,23,0.95));
     border-radius: 10px;
     padding: 5px;
     margin-bottom: 6px;
     border: 1px solid rgba(56,189,248,0.15);
-    box-shadow: 
-        0 4px 12px rgba(0,0,0,0.9),
-        0 0 12px rgba(56,189,248,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.9), 0 0 12px rgba(56,189,248,0.15);
     transition: all 0.2s ease;
 }
-
-.card:hover {
-    transform: translateY(-2px);
-}
-
-.card-title {
-    font-size: 10px;
-    margin-bottom: 2px;
-    color: #38bdf8;
-}
-
-h3 {
-    font-size: 14px;
-    margin: 6px 0 3px 0;
-}
-
-::-webkit-scrollbar {
-    width: 4px;
-}
-::-webkit-scrollbar-thumb {
-    background: #38bdf8;
-}
-
+.card:hover { transform: translateY(-2px); }
+.card-title { font-size: 10px; margin-bottom: 2px; color: #38bdf8; }
+h3 { font-size: 14px; margin: 6px 0 3px 0; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #38bdf8; }
 </style>
 """, unsafe_allow_html=True)
 
 st.title("📊 Volume & Delta Dashboard")
 
 # -------------------------------------------------
-# LOAD DATA
+# LOAD DATA — ttl=300 busts cache every 5 min
+# so new CSV data always shows up
 # -------------------------------------------------
-@st.cache_data
+@st.cache_data(ttl=300)
 def load_data():
     df = pd.read_csv("delta.csv")
-    df['date']       = pd.to_datetime(df['date'])
+    df['date']        = pd.to_datetime(df['date'], dayfirst=False)
     df['total_delta'] = df['delta']
     df['abs_delta']   = df['delta'].abs()
     return df
@@ -80,11 +54,13 @@ def load_data():
 try:
     df = load_data()
 except FileNotFoundError:
-    st.error(
-        "❌ `delta.csv` not found.  \n"
-        "Make sure the file is committed to the **root** of your GitHub repo."
-    )
+    st.error("❌ `delta.csv` not found. Make sure it is committed to your repo root.")
     st.stop()
+
+# refresh button — forces immediate cache clear
+if st.sidebar.button("↺ Refresh Data"):
+    st.cache_data.clear()
+    st.rerun()
 
 # -------------------------------------------------
 # FILTERS
@@ -97,11 +73,20 @@ selected_products = st.sidebar.multiselect(
     default=products
 )
 
+# max slider covers full date range of dataset
+total_days = (df['date'].max() - df['date'].min()).days + 1
+
+days = st.sidebar.slider(
+    "Days",
+    min_value=5,
+    max_value=max(100, total_days),
+    value=min(20, total_days)
+)
+
 df = df[df['product_code'].isin(selected_products)]
 
-days = st.sidebar.slider("Days", 5, 100, 20)
-
-cutoff_date = df['date'].max() - pd.Timedelta(days=days)
+# days-1 ensures the latest date is always included
+cutoff_date = df['date'].max() - pd.Timedelta(days=days - 1)
 df = df[df['date'] >= cutoff_date]
 
 # -------------------------------------------------
