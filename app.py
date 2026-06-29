@@ -40,8 +40,7 @@ h3 { font-size: 14px; margin: 6px 0 3px 0; }
 st.title("📊 Volume & Delta Dashboard")
 
 # -------------------------------------------------
-# LOAD DATA — ttl=300 busts cache every 5 min
-# so new CSV data always shows up
+# LOAD DATA
 # -------------------------------------------------
 @st.cache_data(ttl=300)
 def load_data():
@@ -57,37 +56,143 @@ except FileNotFoundError:
     st.error("❌ `delta.csv` not found. Make sure it is committed to your repo root.")
     st.stop()
 
-# refresh button — forces immediate cache clear
+# -------------------------------------------------
+# SIDEBAR FILTERS
+# -------------------------------------------------
+
 if st.sidebar.button("↺ Refresh Data"):
     st.cache_data.clear()
     st.rerun()
 
-# -------------------------------------------------
-# FILTERS
-# -------------------------------------------------
-products = sorted(df['product_code'].dropna().unique())
+st.sidebar.markdown("---")
 
+products = sorted(df['product_code'].dropna().unique())
 selected_products = st.sidebar.multiselect(
     "Select Product",
     options=products,
     default=products
 )
 
-# max slider covers full date range of dataset
-total_days = (df['date'].max() - df['date'].min()).days + 1
+st.sidebar.markdown("---")
 
+# Filter 1 — how many days of bars to show
+total_days = (df['date'].max() - df['date'].min()).days + 1
 days = st.sidebar.slider(
-    "Days",
+    "📅 Display Window (days)",
     min_value=5,
     max_value=max(100, total_days),
     value=min(20, total_days)
 )
 
-df = df[df['product_code'].isin(selected_products)]
+st.sidebar.markdown("---")
 
-# days-1 ensures the latest date is always included
+# Filter 2 — independent MA period
+ma_period = st.sidebar.slider(
+    "📈 Average Line Period (days)",
+    min_value=2,
+    max_value=30,
+    value=5
+)
+
+# -------------------------------------------------
+# FILTER DATA
+# -------------------------------------------------
+df = df[df['product_code'].isin(selected_products)]
 cutoff_date = df['date'].max() - pd.Timedelta(days=days - 1)
 df = df[df['date'] >= cutoff_date]
+
+# -------------------------------------------------
+# CHART BUILDER
+# -------------------------------------------------
+def make_chart(dff, ma_period):
+
+    # rolling averages — computed on sorted data
+    dff = dff.sort_values('date').reset_index(drop=True)
+    dff['x']        = dff.index.astype(str)
+    dff['date_str'] = dff['date'].dt.strftime('%Y-%m-%d')
+
+    dff['vol_ma']   = dff['total_volume'].rolling(window=ma_period, min_periods=1).mean()
+    dff['delta_ma'] = dff['abs_delta'].rolling(window=ma_period, min_periods=1).mean()
+
+    # bar colors for delta
+    delta_colors = [
+        '#22c55e' if x >= 0 else '#ef4444'
+        for x in dff['total_delta']
+    ]
+
+    # highlight last bar
+    border_width = [0] * len(dff)
+    if border_width:
+        border_width[-1] = 1
+
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.06,
+        row_heights=[0.5, 0.5]
+    )
+
+    # ── ROW 1: Volume bars + MA line ──
+    fig.add_trace(go.Bar(
+        x=dff['x'],
+        y=dff['total_volume'],
+        name='Volume',
+        marker=dict(
+            color='rgba(56,189,248,0.5)',
+            line=dict(color='#facc15', width=border_width)
+        ),
+        customdata=dff[['date_str', 'total_volume']].values,
+        hovertemplate="<b>%{customdata[0]}</b><br>Vol: %{customdata[1]:,}<extra></extra>"
+    ), row=1, col=1)
+
+    fig.add_trace(go.Scatter(
+        x=dff['x'],
+        y=dff['vol_ma'],
+        name=f'Vol MA{ma_period}',
+        mode='lines',
+        line=dict(color='#f59e0b', width=1.5, dash='solid'),
+        customdata=dff[['date_str', 'vol_ma']].values,
+        hovertemplate="<b>%{customdata[0]}</b><br>Vol MA: %{customdata[1]:,.0f}<extra></extra>"
+    ), row=1, col=1)
+
+    # ── ROW 2: Abs Delta bars + MA line ──
+    fig.add_trace(go.Bar(
+        x=dff['x'],
+        y=dff['abs_delta'],
+        name='|Delta|',
+        marker=dict(
+            color=delta_colors,
+            line=dict(color='#facc15', width=border_width)
+        ),
+        customdata=dff[['date_str', 'total_delta']].values,
+        hovertemplate="<b>%{customdata[0]}</b><br>Δ: %{customdata[1]:,}<extra></extra>"
+    ), row=2, col=1)
+
+    fig.add_trace(go.Scatter(
+        x=dff['x'],
+        y=dff['delta_ma'],
+        name=f'Δ MA{ma_period}',
+        mode='lines',
+        line=dict(color='#a78bfa', width=1.5, dash='solid'),
+        customdata=dff[['date_str', 'delta_ma']].values,
+        hovertemplate="<b>%{customdata[0]}</b><br>|Δ| MA: %{customdata[1]:,.0f}<extra></extra>"
+    ), row=2, col=1)
+
+    fig.update_layout(
+        height=200,
+        margin=dict(l=2, r=2, t=5, b=2),
+        showlegend=False,
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#e2e8f0", size=9),
+        hovermode="x unified",
+        bargap=0.2
+    )
+
+    fig.update_xaxes(showticklabels=False, showgrid=False)
+    fig.update_yaxes(showgrid=False, zeroline=False)
+
+    return fig
 
 # -------------------------------------------------
 # DASHBOARD
@@ -114,72 +219,16 @@ for product in selected_products:
 
                 if j >= len(row_instruments):
                     st.markdown(
-                        "<div style='height:150px; visibility:hidden;'></div>",
+                        "<div style='height:200px; visibility:hidden;'></div>",
                         unsafe_allow_html=True
                     )
                     continue
 
                 inst = row_instruments[j]
 
-                dff = (
-                    product_df[product_df['instrument'] == inst]
-                    .sort_values('date')
-                    .reset_index(drop=True)
-                )
+                dff = product_df[product_df['instrument'] == inst].copy()
 
-                dff['x']        = dff.index.astype(str)
-                dff['date_str'] = dff['date'].dt.strftime('%Y-%m-%d')
-
-                colors = [
-                    '#22c55e' if x >= 0 else '#ef4444'
-                    for x in dff['total_delta']
-                ]
-
-                border_width = [0] * len(dff)
-                if border_width:
-                    border_width[-1] = 1
-
-                fig = make_subplots(
-                    rows=2, cols=1,
-                    shared_xaxes=True,
-                    vertical_spacing=0.01,
-                    row_heights=[0.4, 0.6]
-                )
-
-                fig.add_trace(go.Bar(
-                    x=dff['x'],
-                    y=dff['abs_delta'],
-                    marker=dict(
-                        color=colors,
-                        line=dict(color='#facc15', width=border_width)
-                    ),
-                    customdata=dff['date_str'],
-                    hovertemplate="<b>Date:</b> %{customdata}<br>Δ: %{y}<extra></extra>"
-                ), row=1, col=1)
-
-                fig.add_trace(go.Bar(
-                    x=dff['x'],
-                    y=dff['total_volume'],
-                    marker=dict(
-                        color='#38bdf8',
-                        line=dict(color='#facc15', width=border_width)
-                    ),
-                    customdata=dff['date_str'],
-                    hovertemplate="<b>Date:</b> %{customdata}<br>Vol: %{y}<extra></extra>"
-                ), row=2, col=1)
-
-                fig.update_layout(
-                    height=150,
-                    margin=dict(l=2, r=2, t=5, b=2),
-                    showlegend=False,
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="#e2e8f0", size=9),
-                    hovermode="x unified"
-                )
-
-                fig.update_xaxes(showticklabels=False)
-                fig.update_yaxes(showgrid=False)
+                fig = make_chart(dff, ma_period)
 
                 st.markdown('<div class="card">', unsafe_allow_html=True)
                 st.markdown(
