@@ -40,7 +40,7 @@ h3 { font-size: 14px; margin: 6px 0 3px 0; }
 st.title("📊 Volume & Delta Dashboard")
 
 # -------------------------------------------------
-# LOAD DATA
+# LOAD DATA — full history, never filtered
 # -------------------------------------------------
 @st.cache_data(ttl=300)
 def load_data():
@@ -51,22 +51,21 @@ def load_data():
     return df
 
 try:
-    df = load_data()
+    df_full = load_data()          # ← full data, never touched after this
 except FileNotFoundError:
-    st.error("❌ `delta.csv` not found. Make sure it is committed to your repo root.")
+    st.error("❌ `delta.csv` not found.")
     st.stop()
 
 # -------------------------------------------------
-# SIDEBAR FILTERS
+# SIDEBAR
 # -------------------------------------------------
-
 if st.sidebar.button("↺ Refresh Data"):
     st.cache_data.clear()
     st.rerun()
 
 st.sidebar.markdown("---")
 
-products = sorted(df['product_code'].dropna().unique())
+products = sorted(df_full['product_code'].dropna().unique())
 selected_products = st.sidebar.multiselect(
     "Select Product",
     options=products,
@@ -75,8 +74,8 @@ selected_products = st.sidebar.multiselect(
 
 st.sidebar.markdown("---")
 
-# Filter 1 — how many days of bars to show
-total_days = (df['date'].max() - df['date'].min()).days + 1
+total_days = (df_full['date'].max() - df_full['date'].min()).days + 1
+
 days = st.sidebar.slider(
     "📅 Display Window (days)",
     min_value=5,
@@ -86,7 +85,6 @@ days = st.sidebar.slider(
 
 st.sidebar.markdown("---")
 
-# Filter 2 — independent MA period
 ma_period = st.sidebar.slider(
     "📈 Average Line Period (days)",
     min_value=2,
@@ -95,32 +93,38 @@ ma_period = st.sidebar.slider(
 )
 
 # -------------------------------------------------
-# FILTER DATA
-# -------------------------------------------------
-df = df[df['product_code'].isin(selected_products)]
-cutoff_date = df['date'].max() - pd.Timedelta(days=days - 1)
-df = df[df['date'] >= cutoff_date]
-
-# -------------------------------------------------
 # CHART BUILDER
+# MA computed on full history → display window sliced after
 # -------------------------------------------------
-def make_chart(dff, ma_period):
+def make_chart(dff_full, ma_period, days):
 
-    # rolling averages — computed on sorted data
-    dff = dff.sort_values('date').reset_index(drop=True)
+    # 1 — sort full instrument history
+    dff_full = dff_full.sort_values('date').reset_index(drop=True)
+
+    # 2 — MA on full history so changing display window never affects it
+    dff_full['vol_ma']   = (
+        dff_full['total_volume']
+        .rolling(window=ma_period, min_periods=1)
+        .mean()
+    )
+    dff_full['delta_ma'] = (
+        dff_full['abs_delta']
+        .rolling(window=ma_period, min_periods=1)
+        .mean()
+    )
+
+    # 3 — slice to display window only after MA is done
+    cutoff = dff_full['date'].max() - pd.Timedelta(days=days - 1)
+    dff = dff_full[dff_full['date'] >= cutoff].reset_index(drop=True)
+
     dff['x']        = dff.index.astype(str)
     dff['date_str'] = dff['date'].dt.strftime('%Y-%m-%d')
 
-    dff['vol_ma']   = dff['total_volume'].rolling(window=ma_period, min_periods=1).mean()
-    dff['delta_ma'] = dff['abs_delta'].rolling(window=ma_period, min_periods=1).mean()
-
-    # bar colors for delta
     delta_colors = [
         '#22c55e' if x >= 0 else '#ef4444'
         for x in dff['total_delta']
     ]
 
-    # highlight last bar
     border_width = [0] * len(dff)
     if border_width:
         border_width[-1] = 1
@@ -132,7 +136,7 @@ def make_chart(dff, ma_period):
         row_heights=[0.5, 0.5]
     )
 
-    # ── ROW 1: Volume bars + MA line ──
+    # ── Volume bars + MA ──
     fig.add_trace(go.Bar(
         x=dff['x'],
         y=dff['total_volume'],
@@ -150,12 +154,12 @@ def make_chart(dff, ma_period):
         y=dff['vol_ma'],
         name=f'Vol MA{ma_period}',
         mode='lines',
-        line=dict(color='#f59e0b', width=1.5, dash='solid'),
+        line=dict(color='#f59e0b', width=1.5),
         customdata=dff[['date_str', 'vol_ma']].values,
-        hovertemplate="<b>%{customdata[0]}</b><br>Vol MA: %{customdata[1]:,.0f}<extra></extra>"
+        hovertemplate="<b>%{customdata[0]}</b><br>Vol MA{}: %{{customdata[1]:,.0f}}<extra></extra>".format(ma_period)
     ), row=1, col=1)
 
-    # ── ROW 2: Abs Delta bars + MA line ──
+    # ── Abs Delta bars + MA ──
     fig.add_trace(go.Bar(
         x=dff['x'],
         y=dff['abs_delta'],
@@ -171,11 +175,11 @@ def make_chart(dff, ma_period):
     fig.add_trace(go.Scatter(
         x=dff['x'],
         y=dff['delta_ma'],
-        name=f'Δ MA{ma_period}',
+        name=f'|Δ| MA{ma_period}',
         mode='lines',
-        line=dict(color='#a78bfa', width=1.5, dash='solid'),
+        line=dict(color='#a78bfa', width=1.5),
         customdata=dff[['date_str', 'delta_ma']].values,
-        hovertemplate="<b>%{customdata[0]}</b><br>|Δ| MA: %{customdata[1]:,.0f}<extra></extra>"
+        hovertemplate="<b>%{customdata[0]}</b><br>|Δ| MA{}: %{{customdata[1]:,.0f}}<extra></extra>".format(ma_period)
     ), row=2, col=1)
 
     fig.update_layout(
@@ -196,12 +200,14 @@ def make_chart(dff, ma_period):
 
 # -------------------------------------------------
 # DASHBOARD
+# pass df_full instrument slice — not the filtered df
 # -------------------------------------------------
 cols_per_row = 5
 
 for product in selected_products:
 
-    product_df = df[df['product_code'] == product]
+    # filter by product only — NO date filter here
+    product_df = df_full[df_full['product_code'] == product]
     if product_df.empty:
         continue
 
@@ -226,9 +232,10 @@ for product in selected_products:
 
                 inst = row_instruments[j]
 
-                dff = product_df[product_df['instrument'] == inst].copy()
+                # full instrument history → MA computed inside, window sliced inside
+                dff_full = product_df[product_df['instrument'] == inst].copy()
 
-                fig = make_chart(dff, ma_period)
+                fig = make_chart(dff_full, ma_period, days)
 
                 st.markdown('<div class="card">', unsafe_allow_html=True)
                 st.markdown(
