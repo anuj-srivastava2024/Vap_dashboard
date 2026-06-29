@@ -40,7 +40,7 @@ h3 { font-size: 14px; margin: 6px 0 3px 0; }
 st.title("📊 Volume & Delta Dashboard")
 
 # -------------------------------------------------
-# LOAD DATA — full history, never filtered
+# LOAD DATA
 # -------------------------------------------------
 @st.cache_data(ttl=300)
 def load_data():
@@ -51,9 +51,9 @@ def load_data():
     return df
 
 try:
-    df_full = load_data()          # ← full data, never touched after this
+    df_full = load_data()
 except FileNotFoundError:
-    st.error("❌ `delta.csv` not found.")
+    st.error("❌ `delta.csv` not found. Make sure it is committed to your repo root.")
     st.stop()
 
 # -------------------------------------------------
@@ -94,14 +94,14 @@ ma_period = st.sidebar.slider(
 
 # -------------------------------------------------
 # CHART BUILDER
-# MA computed on full history → display window sliced after
 # -------------------------------------------------
 def make_chart(dff_full, ma_period, days):
 
-    # 1 — sort full instrument history
+    # STEP 1 — sort full history
     dff_full = dff_full.sort_values('date').reset_index(drop=True)
 
-    # 2 — MA on full history so changing display window never affects it
+    # STEP 2 — compute MA on full history
+    # changing display window will NEVER affect these values
     dff_full['vol_ma']   = (
         dff_full['total_volume']
         .rolling(window=ma_period, min_periods=1)
@@ -113,7 +113,7 @@ def make_chart(dff_full, ma_period, days):
         .mean()
     )
 
-    # 3 — slice to display window only after MA is done
+    # STEP 3 — slice to display window AFTER MA is computed
     cutoff = dff_full['date'].max() - pd.Timedelta(days=days - 1)
     dff = dff_full[dff_full['date'] >= cutoff].reset_index(drop=True)
 
@@ -136,7 +136,7 @@ def make_chart(dff_full, ma_period, days):
         row_heights=[0.5, 0.5]
     )
 
-    # ── Volume bars + MA ──
+    # ── ROW 1: Volume bars + MA line ──
     fig.add_trace(go.Bar(
         x=dff['x'],
         y=dff['total_volume'],
@@ -156,10 +156,10 @@ def make_chart(dff_full, ma_period, days):
         mode='lines',
         line=dict(color='#f59e0b', width=1.5),
         customdata=dff[['date_str', 'vol_ma']].values,
-        hovertemplate="<b>%{customdata[0]}</b><br>Vol MA{}: %{{customdata[1]:,.0f}}<extra></extra>".format(ma_period)
+        hovertemplate=f"<b>%{{customdata[0]}}</b><br>Vol MA{ma_period}: %{{customdata[1]:,.0f}}<extra></extra>"
     ), row=1, col=1)
 
-    # ── Abs Delta bars + MA ──
+    # ── ROW 2: Abs Delta bars + MA line ──
     fig.add_trace(go.Bar(
         x=dff['x'],
         y=dff['abs_delta'],
@@ -179,7 +179,7 @@ def make_chart(dff_full, ma_period, days):
         mode='lines',
         line=dict(color='#a78bfa', width=1.5),
         customdata=dff[['date_str', 'delta_ma']].values,
-        hovertemplate="<b>%{customdata[0]}</b><br>|Δ| MA{}: %{{customdata[1]:,.0f}}<extra></extra>".format(ma_period)
+        hovertemplate=f"<b>%{{customdata[0]}}</b><br>|Δ| MA{ma_period}: %{{customdata[1]:,.0f}}<extra></extra>"
     ), row=2, col=1)
 
     fig.update_layout(
@@ -200,13 +200,11 @@ def make_chart(dff_full, ma_period, days):
 
 # -------------------------------------------------
 # DASHBOARD
-# pass df_full instrument slice — not the filtered df
 # -------------------------------------------------
 cols_per_row = 5
 
 for product in selected_products:
 
-    # filter by product only — NO date filter here
     product_df = df_full[df_full['product_code'] == product]
     if product_df.empty:
         continue
@@ -232,10 +230,12 @@ for product in selected_products:
 
                 inst = row_instruments[j]
 
-                # full instrument history → MA computed inside, window sliced inside
-                dff_full = product_df[product_df['instrument'] == inst].copy()
+                # pass full instrument history — MA computed inside on all data
+                dff_full_inst = product_df[
+                    product_df['instrument'] == inst
+                ].copy()
 
-                fig = make_chart(dff_full, ma_period, days)
+                fig = make_chart(dff_full_inst, ma_period, days)
 
                 st.markdown('<div class="card">', unsafe_allow_html=True)
                 st.markdown(
